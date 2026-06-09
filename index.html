@@ -3,576 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>킥보드 불법 주차 단속</title>
+    <title>스마트 킥보드 통합 민원 센터</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-        select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>"); background-repeat: no-repeat; background-position: right 14px center; background-size: 14px; }
-        ::-webkit-scrollbar { width: 0px; }
-        .map-bg {
-            background-color: #09090b;
-            background-image: url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=600'); 
-            background-size: cover; background-position: center; background-blend-mode: overlay;
+        /* 카메라 스캔 내부 버튼 디자인 표준화 */
+        #reader button {
+            background-color: #4f46e5 !important; color: white !important; border: none !important;
+            padding: 10px 16px !important; border-radius: 8px !important; font-size: 13px !important;
+            font-weight: bold !important; cursor: pointer !important; margin: 5px !important;
         }
-        @keyframes pulse-ring { 0% { transform: scale(0.6); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
-        .pulse-marker { position: relative; }
-        .pulse-marker::before { content: ''; position: absolute; box-sizing: border-box; width: 32px; height: 32px; left: -10px; top: -10px; border-radius: 50%; background-color: inherit; animation: pulse-ring 1.5s infinite; }
+        body { -webkit-overflow-scrolling: touch; }
     </style>
 </head>
-<body class="bg-[#09090b] min-h-screen text-[#f4f4f5] flex flex-col justify-between overflow-x-hidden select-none">
+<body class="bg-gradient-to-tr from-slate-100 to-indigo-50 min-h-screen p-4 flex flex-col items-center">
 
-    <div id="screenRole" class="w-full max-w-sm mx-auto flex-1 flex flex-col justify-between p-6 pt-16 pb-8">
-        <div class="space-y-2 text-left">
-            <h1 class="text-2xl font-bold tracking-tight text-white">킥보드 불법 주차 단속</h1>
-            <p class="text-sm text-[#a1a1aa] font-medium leading-relaxed">개방형 킥보드 관제 플랫폼</p>
+    <div class="w-full max-w-md bg-white p-5 rounded-2xl shadow-xl border border-slate-200 space-y-5 my-auto">
+        <div class="text-center">
+            <h1 class="text-xl font-black text-indigo-900">🚦 킥보드 불법주차 신고 (App)</h1>
+            <p id="subTitleText" class="text-[11px] font-semibold text-indigo-600 mt-1 bg-indigo-50 py-1.5 px-2 rounded-lg">※ 앱 설정에서 카메라 권한을 반드시 허용해 주세요.</p>
         </div>
 
-        <div class="space-y-3 my-auto">
-            <button onclick="selectRole('citizen')" class="w-full bg-[#18181b] border border-[#27272a] rounded-2xl p-5 text-left active:scale-[0.98] transition-all cursor-pointer">
-                <div class="flex justify-between items-center mb-1.5">
-                    <span class="text-base font-semibold text-white">일반 시민</span>
-                    <span class="text-[10px] bg-[#27272a] text-[#a1a1aa] px-2 py-1 rounded-md font-bold">민원 신고</span>
-                </div>
-                <p class="text-xs text-[#a1a1aa] leading-normal font-light">방치된 킥보드를 스캔하여 과태료 부과 및 민원을 접수합니다.</p>
-            </button>
-
-            <button onclick="selectRole('driver')" class="w-full bg-[#18181b] border border-[#27272a] rounded-2xl p-5 text-left active:scale-[0.98] transition-all cursor-pointer">
-                <div class="flex justify-between items-center mb-1.5">
-                    <span class="text-base font-semibold text-white">수거 기사</span>
-                    <span class="text-[10px] bg-[#27272a] text-[#a1a1aa] px-2 py-1 rounded-md font-bold">관제 시스템</span>
-                </div>
-                <p class="text-xs text-[#a1a1aa] leading-normal font-light">위험도 알고리즘에 정렬된 기기 목록을 배정받고 수거합니다.</p>
-            </button>
+        <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="switchMode('qr')" id="btnQr" class="p-3 rounded-xl font-bold border-2 border-indigo-600 bg-indigo-50 text-indigo-600 text-xs cursor-pointer">📷 QR 스캔</button>
+            <button type="button" onclick="switchMode('manual')" id="btnManual" class="p-3 rounded-xl font-bold border-2 border-slate-200 text-slate-600 text-xs cursor-pointer">⌨️ ID 직접 입력</button>
         </div>
 
-        <div class="text-left pt-4">
-            <p class="text-[10px] text-[#52525b] tracking-tight font-medium">© 2026 킥보드 불법 주차 단속. All rights reserved.</p>
-        </div>
-    </div>
-
-    <div id="screenRegion" class="w-full max-w-sm mx-auto flex-1 flex flex-col justify-between p-6 pt-16 pb-8 hidden">
-        <div class="space-y-2 text-left">
-            <h2 id="regionTitle" class="text-2xl font-bold tracking-tight text-white">활동 권역 설정</h2>
-            <p class="text-sm text-[#a1a1aa] font-medium leading-relaxed">단말기 위치를 확인하거나<br>행정구역을 직접 검색합니다.</p>
-        </div>
-
-        <div class="space-y-6 my-auto w-full">
-            <button onclick="requestGPSLocation()" class="w-full bg-[#18181b] border border-[#27272a] active:border-blue-500/50 rounded-2xl p-5 text-left transition-all cursor-pointer group">
-                <div class="flex justify-between items-center mb-1.5">
-                    <span class="text-sm font-semibold text-blue-500 flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg> 현재 위치 자동 매칭</span>
-                </div>
-                <p class="text-xs text-[#a1a1aa] font-light">내장된 GPS 센서를 이용해 내 위치를 스캔합니다.</p>
-            </button>
-
-            <div class="relative flex py-1 items-center">
-                <div class="flex-grow border-t border-[#27272a]"></div>
-                <span class="flex-shrink mx-4 text-[10px] font-bold text-[#52525b] uppercase font-mono">OR</span>
-                <div class="flex-grow border-t border-[#27272a]"></div>
-            </div>
-
-            <div class="space-y-2">
-                <label class="text-[11px] font-semibold text-[#a1a1aa] block">행정구역 검색</label>
-                <div class="relative">
-                    <input type="text" id="addressSearchInput" oninput="onSearchInput()" placeholder="동/읍/면 단위 입력" class="w-full bg-[#18181b] border border-[#27272a] rounded-xl pl-4 pr-14 py-3.5 text-sm text-white placeholder-[#52525b] focus:outline-none focus:border-blue-500 transition-all">
-                    <button onclick="searchAddressManual()" class="absolute right-3 top-3.5 text-xs text-blue-500 font-bold cursor-pointer">검색</button>
-                </div>
-            </div>
-
-            <div id="geoFeedbackPanel" class="p-4 bg-[#18181b] border border-[#27272a] rounded-xl text-center text-xs text-[#a1a1aa] hidden"></div>
-        </div>
-
-        <div class="space-y-4">
-            <button id="btnRegionNext" onclick="submitRegion()" class="w-full bg-[#18181b] border border-[#27272a] text-[#52525b] py-4 rounded-xl text-sm font-bold transition-all pointer-events-none text-center block">설정 완료</button>
-            <div class="flex justify-between items-center pt-2"><button onclick="showScreen('role')" class="text-xs text-[#a1a1aa] hover:text-white transition-colors cursor-pointer">➔ 이전으로</button></div>
-        </div>
-    </div>
-
-    <div id="screenDriverLogin" class="w-full max-w-sm mx-auto flex-1 flex flex-col justify-between p-6 pt-16 pb-8 hidden">
-        <div class="space-y-2 text-left">
-            <h2 class="text-2xl font-bold tracking-tight text-white">수거기사 로그인</h2>
-            <p class="text-sm text-[#a1a1aa] font-medium leading-relaxed">소속 관제 회사를 선택하여<br>자사 기기 수거를 시작합니다.</p>
-        </div>
-
-        <div class="space-y-2.5 my-auto w-full">
-            <label class="text-[11px] font-semibold text-[#a1a1aa] block mb-1">소속 브랜드 선택</label>
-            <button onclick="loginAsCompany('지쿠(GCOO)')" class="w-full bg-[#18181b] border border-[#27272a] hover:border-green-500/50 rounded-xl p-4 text-left font-bold text-sm text-white flex justify-between items-center transition-all cursor-pointer">
-                <span>지쿠 (GCOO)</span> <span class="text-xs text-green-500 font-mono">Select ➔</span>
-            </button>
-            <button onclick="loginAsCompany('스윙(SWING)')" class="w-full bg-[#18181b] border border-[#27272a] hover:border-amber-500/50 rounded-xl p-4 text-left font-bold text-sm text-white flex justify-between items-center transition-all cursor-pointer">
-                <span>스윙 (SWING)</span> <span class="text-xs text-amber-500 font-mono">Select ➔</span>
-            </button>
-            <button onclick="loginAsCompany('빔(BEAM)')" class="w-full bg-[#18181b] border border-[#27272a] hover:border-purple-500/50 rounded-xl p-4 text-left font-bold text-sm text-white flex justify-between items-center transition-all cursor-pointer">
-                <span>빔 (BEAM)</span> <span class="text-xs text-purple-500 font-mono">Select ➔</span>
-            </button>
-            <button onclick="loginAsCompany('씽씽')" class="w-full bg-[#18181b] border border-[#27272a] hover:border-orange-500/50 rounded-xl p-4 text-left font-bold text-sm text-white flex justify-between items-center transition-all cursor-pointer">
-                <span>씽씽 (XING)</span> <span class="text-xs text-orange-500 font-mono">Select ➔</span>
-            </button>
-        </div>
-
-        <div class="pt-2">
-            <button onclick="showScreen('region')" class="text-xs text-[#a1a1aa] hover:text-white transition-colors cursor-pointer">➔ 이전으로</button>
-        </div>
-    </div>
-
-    <div id="screenCitizen" class="w-full max-w-sm mx-auto h-screen flex flex-col hidden relative overflow-hidden bg-[#09090b]">
-        <div class="bg-[#09090b]/90 border-b border-[#27272a] p-4 flex justify-between items-center flex-shrink-0 sticky top-0 z-40 backdrop-blur-md">
-            <div>
-                <h2 class="text-sm font-bold text-white flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span> 불법주차 신고</h2>
-                <p id="citizenDisplayArea" class="text-[10px] text-[#a1a1aa] mt-0.5 ml-3.5"></p>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="toggleCitizenHistory()" class="text-[11px] text-blue-400 font-semibold cursor-pointer">내역함</button>
-                <button onclick="showScreen('role')" class="text-[11px] text-[#a1a1aa] font-semibold cursor-pointer">종료</button>
-            </div>
-        </div>
-
-        <div class="flex-1 overflow-y-auto p-5 space-y-5">
-            <div class="grid grid-cols-2 gap-2 bg-[#18181b] p-1 rounded-xl border border-[#27272a]">
-                <button type="button" onclick="switchAppMode('qr')" id="btnAppQr" class="py-2 rounded-lg font-bold bg-[#27272a] text-white text-[11px] transition-all cursor-pointer">QR 스캔</button>
-                <button type="button" onclick="switchAppMode('manual')" id="btnAppManual" class="py-2 rounded-lg font-bold text-[#a1a1aa] text-[11px] transition-all cursor-pointer">직접 입력</button>
-            </div>
-
-            <form class="space-y-5" onsubmit="event.preventDefault();">
-                <div id="appQrContainer" class="block space-y-2">
-                    <div id="appReaderMock" class="w-full aspect-video rounded-xl border border-[#27272a] bg-black flex flex-col items-center justify-center text-center p-4 text-xs text-[#a1a1aa] relative overflow-hidden">
-                        <video id="liveCameraFeed" autoplay playsinline class="absolute inset-0 w-full h-full object-cover opacity-70"></video>
-                        <div class="absolute inset-4 border border-dashed border-blue-500/60 rounded-lg pointer-events-none z-10"></div>
-                        <div class="z-10 bg-[#09090b]/80 px-3 py-1.5 rounded-lg backdrop-blur-md">
-                            <p class="font-bold text-blue-500 mb-0.5">실시간 스캔 중...</p>
-                            <p class="text-[10px] text-[#a1a1aa]">QR코드를 프레임에 맞춰주세요</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="appManualContainer" class="hidden">
-                    <label class="block text-[11px] font-semibold text-[#a1a1aa] mb-1.5">고유 ID</label>
-                    <input type="text" id="appScooterId" placeholder="예: GCOO-101" class="w-full p-3.5 border border-[#27272a] rounded-xl font-mono uppercase text-sm bg-[#18181b] text-white placeholder-[#52525b] focus:outline-none focus:border-blue-500 transition-all">
-                </div>
-                
-                <div>
-                    <label class="block text-[11px] font-semibold text-[#a1a1aa] mb-1.5">주차 구역</label>
-                    <select id="appLocationType" class="w-full p-3.5 border border-[#27272a] rounded-xl bg-[#18181b] text-white text-xs focus:outline-none focus:border-blue-500 transition-all">
-                        <option value="일반 보행로(인도)">일반 보행로(인도)</option>
-                        <option value="점자블록 위">점자블록 위</option>
-                        <option value="횡단보도">횡단보도</option>
-                        <option value="버스정류장 앞">버스정류장 앞</option>
-                        <option value="소화전 앞">소화전 앞</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-[11px] font-semibold text-[#a1a1aa] mb-1.5">방해 형태</label>
-                    <select id="appObstructionType" class="w-full p-3.5 border border-[#27272a] rounded-xl bg-[#18181b] text-white text-xs focus:outline-none focus:border-blue-500 transition-all">
-                        <option value="해당 없음 (단순 주차)">해당 없음 (단순 주차)</option>
-                        <option value="통행을 완전히 막음 (길막)">통행을 완전히 막음 (길막)</option>
-                        <option value="상가/건물 출입구를 막음">상가/건물 출입구를 막음</option>
-                        <option value="차도나 자전거도로 침범">차도나 자전거도로 침범</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-[11px] font-semibold text-[#a1a1aa] mb-1.5">현장 사진</label>
-                    <input type="file" id="appImageInput" accept="image/*" onchange="onAppImageUpload(event)" class="hidden">
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="document.getElementById('appImageInput').setAttribute('capture', 'environment'); document.getElementById('appImageInput').click();" class="flex flex-col items-center justify-center p-4 bg-[#18181b] border border-[#27272a] rounded-xl hover:border-blue-500/50 transition-all">
-                            <span class="text-lg mb-1">📷</span>
-                            <span class="text-[10px] font-bold text-white">카메라 촬영</span>
-                        </button>
-                        <button type="button" onclick="document.getElementById('appImageInput').removeAttribute('capture'); document.getElementById('appImageInput').click();" class="flex flex-col items-center justify-center p-4 bg-[#18181b] border border-[#27272a] rounded-xl hover:border-blue-500/50 transition-all">
-                            <span class="text-lg mb-1">🖼️</span>
-                            <span class="text-[10px] font-bold text-white">앨범에서 선택</span>
-                        </button>
-                    </div>
-                    <div class="mt-3">
-                        <img id="appImagePreview" class="hidden max-h-24 mx-auto rounded-lg border border-[#27272a]">
-                        <div id="aiAnalysisPanel" class="p-3 bg-[#18181b] border border-[#27272a] rounded-xl font-mono text-[10px] text-blue-400 mt-2 hidden leading-relaxed"></div>
-                    </div>
-                </div>
-
-                <button type="button" onclick="submitCitizenReport()" class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold text-sm cursor-pointer active:bg-blue-700 transition-all">신고 접수</button>
-            </form>
+        <form class="space-y-4" onsubmit="event.preventDefault();">
+            <div id="qrContainer" class="block"><div id="reader" class="w-full overflow-hidden rounded-xl border border-slate-300 bg-slate-50 p-1 text-center text-xs"></div></div>
             
-            <div id="appTimelineBox" class="border-t border-[#27272a] pt-5 hidden pb-8">
-                <p class="text-[10px] font-semibold text-[#a1a1aa] mb-4">처리 현황</p>
-                <div class="flex justify-between items-center text-[9px] relative px-2">
-                    <div class="absolute top-2 left-6 right-6 h-0.5 bg-[#27272a] z-0"></div>
-                    <div id="appTimelineProgress" class="absolute top-2 left-6 h-0.5 bg-blue-500 z-0 transition-all duration-700" style="width: 0%;"></div>
-                    <div class="flex flex-col items-center z-10 w-1/3"><div id="node1" class="w-4 h-4 rounded-full bg-[#27272a] text-transparent flex items-center justify-center font-bold mb-1.5 transition-colors"></div><span id="node1Text" class="text-[#52525b] font-medium">접수</span></div>
-                    <div class="flex flex-col items-center z-10 w-1/3"><div id="node2" class="w-4 h-4 rounded-full bg-[#27272a] text-transparent flex items-center justify-center font-bold mb-1.5 transition-colors"></div><span id="node2Text" class="text-[#52525b] font-medium">부과</span></div>
-                    <div class="flex flex-col items-center z-10 w-1/3"><div id="node3" class="w-4 h-4 rounded-full bg-[#27272a] text-transparent flex items-center justify-center font-bold mb-1.5 transition-colors"></div><span id="node3Text" class="text-[#52525b] font-medium">배정</span></div>
-                </div>
+            <div id="manualContainer" class="hidden">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">킥보드 고유 ID</label>
+                <input type="text" id="scooterId" placeholder="예: GCOO-101, XING-201" class="w-full p-2.5 border border-slate-300 rounded-xl font-mono uppercase text-base focus:outline-indigo-500 bg-slate-50">
             </div>
-        </div>
-
-        <div id="citizenHistoryModal" class="absolute inset-0 bg-[#09090b] z-50 flex flex-col transition-transform duration-300 translate-y-full">
-            <div class="bg-[#09090b]/90 border-b border-[#27272a] p-4 flex justify-between items-center backdrop-blur-md">
-                <h2 class="text-sm font-bold text-white">내 신고 내역</h2>
-                <button onclick="toggleCitizenHistory()" class="text-[11px] text-[#a1a1aa] font-semibold cursor-pointer">닫기</button>
-            </div>
-            <div id="citizenHistoryList" class="flex-1 overflow-y-auto p-5 space-y-3"></div>
-        </div>
-    </div>
-
-    <div id="screenDriver" class="w-full max-w-sm mx-auto h-screen flex flex-col hidden overflow-hidden relative bg-[#09090b]">
-        <div class="bg-[#09090b]/90 border-b border-[#27272a] p-4 flex justify-between items-center flex-shrink-0 z-30 backdrop-blur-md">
+            
             <div>
-                <h2 id="driverHeaderTitle" class="text-sm font-bold text-white flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> 운행 지도</h2>
-                <div class="flex items-center gap-1.5 mt-0.5 ml-3.5">
-                    <span id="driverDisplayArea" class="text-[10px] text-[#a1a1aa]"></span>
-                    <span class="text-[9px] text-[#52525b]">|</span>
-                    <span id="driverCompanyBadge" class="text-[9px] text-blue-400 font-bold bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20"></span>
+                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">📍 방치 지역 위치 (택1)</label>
+                <div class="grid grid-cols-1 gap-1.5 text-xs">
+                    <label class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer"><input type="radio" name="locationGroup" value="일반 보행로(인도)" checked class="w-4 h-4 text-indigo-600"> <span>일반 보행로(인도)</span></label>
+                    <label class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer"><input type="radio" name="locationGroup" value="점자블록 위" class="w-4 h-4 text-indigo-600"> <span class="text-rose-600 font-semibold">점자블록 위</span></label>
+                    <label class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer"><input type="radio" name="locationGroup" value="횡단보도" class="w-4 h-4 text-indigo-600"> <span class="text-rose-600 font-semibold">횡단보도</span></label>
+                    <label class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer"><input type="radio" name="locationGroup" value="버스정류장 앞" class="w-4 h-4 text-indigo-600"> <span>버스정류장 앞</span></label>
+                    <label class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer"><input type="radio" name="locationGroup" value="소화전 앞" class="w-4 h-4 text-indigo-600"> <span>소화전 앞</span></label>
                 </div>
             </div>
-            <button onclick="logoutDriver()" class="text-[11px] text-[#a1a1aa] font-semibold cursor-pointer">종료</button>
+
+            <div>
+                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1.5">⚠️ 구체적인 방해 형태 (택1)</label>
+                <div class="grid grid-cols-1 gap-1.5 text-xs">
+                    <label class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer"><input type="radio" name="obstructionGroup" value="해당 없음 (단순 주차)" checked class="w-4 h-4 text-indigo-600"> <span>해당 없음 (단순 주차)</span></label>
+                    <label class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer"><input type="radio" name="obstructionGroup" value="통행을 완전히 막음 (길막)" class="w-4 h-4 text-indigo-600"> <span class="text-amber-600 font-semibold">통행을 완전히 막음 (길막)</span></label>
+                    <label class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer"><input type="radio" name="obstructionGroup" value="상가/건물 출입구를 막음" class="w-4 h-4 text-indigo-600"> <span>상가/건물 출입구를 막음</span></label>
+                    <label class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer"><input type="radio" name="obstructionGroup" value="골목길 코너 시야 방해" class="w-4 h-4 text-indigo-600"> <span>골목길 코너/모퉁이 시야 방해</span></label>
+                    <label class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer"><input type="radio" name="obstructionGroup" value="차도나 자전거도로 침범" class="w-4 h-4 text-indigo-600"> <span>차도나 자전거도로 침범</span></label>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">📸 현장 사진 첨부</label>
+                <div class="relative border-2 border-dashed border-slate-300 rounded-xl p-3 bg-slate-50 text-center">
+                    <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <div id="uploadPlaceholder"><p class="text-xs font-semibold text-slate-700">갤러리에서 사진 선택</p></div>
+                    <img id="imagePreview" class="hidden max-h-24 mx-auto rounded-lg border">
+                </div>
+            </div>
+            
+            <button type="button" onclick="submitReport()" class="w-full bg-indigo-600 text-white p-3.5 rounded-xl font-bold text-xs shadow-md cursor-pointer active:bg-indigo-700 transition-colors">신고 접수 및 기사 배정</button>
+        </form>
+        
+        <div id="resultBox" class="mt-3 p-3 rounded-xl bg-slate-900 text-emerald-400 font-mono text-[11px] hidden whitespace-pre-line"></div>
+        
+        <div id="timelineBox" class="border-t border-slate-100 pt-3 hidden space-y-2">
+            <p class="text-[11px] font-bold text-slate-700">📡 실시간 민원 처리 추적</p>
+            <div class="flex justify-between items-center text-[10px] relative pt-1">
+                <div class="absolute top-4 left-0 right-0 h-0.5 bg-slate-200 z-0"></div>
+                <div id="timelineProgress" class="absolute top-4 left-0 h-0.5 bg-indigo-500 z-0 transition-all duration-500" style="width: 0%;"></div>
+                <div class="flex flex-col items-center z-10 w-1/3"><div id="step1Dot" class="w-5 h-5 rounded-full bg-slate-200 text-white flex items-center justify-center font-bold mb-1 transition-colors">1</div><span id="step1Text" class="text-slate-400 font-medium">민원 접수</span></div>
+                <div class="flex flex-col items-center z-10 w-1/3"><div id="step2Dot" class="w-5 h-5 rounded-full bg-slate-200 text-white flex items-center justify-center font-bold mb-1 transition-colors">2</div><span id="step2Text" class="text-slate-400 font-medium">과태료 부과</span></div>
+                <div class="flex flex-col items-center z-10 w-1/3"><div id="step3Dot" class="w-5 h-5 rounded-full bg-slate-200 text-white flex items-center justify-center font-bold mb-1 transition-colors">3</div><span id="step3Text" class="text-slate-400 font-medium">기사 출동</span></div>
+            </div>
         </div>
-
-        <div class="flex-1 w-full relative min-h-0">
-            <div id="driverSubMap" class="absolute inset-0 map-bg block z-10">
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-blue-500 border-2 border-white rounded-full z-20 shadow-lg shadow-blue-500/50"><div class="absolute -inset-4 border border-blue-400/40 rounded-full animate-ping"></div></div>
-                <div id="mapMarkersContainer"></div>
-            </div>
-
-            <div id="driverSubList" class="absolute inset-0 bg-[#09090b] p-5 overflow-y-auto hidden z-10 space-y-4">
-                <div class="flex justify-between items-center">
-                    <span class="text-xs font-semibold text-[#a1a1aa]">우선순위 목록</span>
-                    <span id="listCountBadge" class="text-[10px] bg-[#18181b] border border-[#27272a] px-2 py-1 rounded-md text-[#f4f4f5]">0개 대기중</span>
-                </div>
-                <div id="driverCardListContainer" class="space-y-3"></div>
-            </div>
-
-            <div id="driverSubPayout" class="absolute inset-0 bg-[#09090b] p-5 overflow-y-auto hidden z-10 space-y-4">
-                <div class="bg-[#18181b] border border-[#27272a] p-5 rounded-2xl flex items-center space-x-4">
-                    <div class="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 flex items-center justify-center text-sm font-bold">DR</div>
-                    <div>
-                        <h4 class="text-sm font-bold text-white">기사 프로필</h4>
-                        <p id="driverProfileCompany" class="text-[10px] text-blue-400 mt-0.5 font-medium"></p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-[#18181b] border border-[#27272a] p-5 rounded-2xl"><span class="text-[10px] font-medium text-[#a1a1aa] block mb-1">오늘 수거</span><span id="payoutCount" class="text-xl font-bold text-white font-mono">0건</span></div>
-                    <div class="bg-[#18181b] border border-[#27272a] p-5 rounded-2xl"><span class="text-[10px] font-medium text-[#a1a1aa] block mb-1">예상 수익</span><span id="payoutMoney" class="text-xl font-bold text-blue-400 font-mono">0원</span></div>
-                </div>
-                <div class="bg-[#18181b] border border-[#27272a] p-5 rounded-2xl space-y-3">
-                    <div class="flex justify-between items-center text-[11px]"><span class="font-medium text-[#a1a1aa]">일일 목표 달성률</span><span id="payoutPercent" class="font-bold text-white font-mono">0%</span></div>
-                    <div class="w-full h-1.5 bg-[#27272a] rounded-full overflow-hidden"><div id="payoutProgressBar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%;"></div></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-[#09090b] border-t border-[#27272a] h-16 grid grid-cols-3 flex-shrink-0 z-30 text-center pb-safe">
-            <button onclick="switchDriverSubTab('map')" id="navTabMap" class="flex flex-col items-center justify-center text-blue-500 font-bold transition-all cursor-pointer"><span class="text-[10px] mt-1">지도</span></button>
-            <button onclick="switchDriverSubTab('list')" id="navTabList" class="flex flex-col items-center justify-center text-[#52525b] font-medium transition-all cursor-pointer"><span class="text-[10px] mt-1">목록</span></button>
-            <button onclick="switchDriverSubTab('payout')" id="navTabPayout" class="flex flex-col items-center justify-center text-[#52525b] font-medium transition-all cursor-pointer"><span class="text-[10px] mt-1">실적</span></button>
-        </div>
+        <div class="text-center pt-1 border-t border-slate-100"><a href="driver.html" class="text-[11px] text-indigo-600 font-bold">🚚 기사용 대시보드로 이동 ➔</a></div>
     </div>
 
     <script>
-        // 자급자족을 위한 로컬 상태 관리 시스템
-        const appState = { userRole: null, driverCompany: null, detectedAddress: "내 주변 권역", lat: 37.5665, lng: 126.9780, hasUploadedImage: false };
-        let driverPerformance = { totalCleared: 0, totalMoney: 0 };
-        let cameraStream = null;
+        let html5QrcodeScanner = null; let isImageAttached = false;
+        const BASE_WEIGHTS = {"일반 보행로(인도)": 2, "점자블록 위": 5, "횡단보도": 5, "버스정류장 앞": 4, "소화전 앞": 4};
+        const OBSTRUCTION_BONUS = {"해당 없음 (단순 주차)": 0, "통행을 완전히 막음 (길막)": 4, "상가/건물 출입구를 막음": 3, "골목길 코너 시야 방해": 3, "차도나 자전거도로 침범": 2};
+        const last_ride_db = {
+            "GCOO-101": {"brand": "지쿠(GCOO)", "user_id": "cau_student1", "region": "내리 대학가 원룸촌", "lat": 37.0101, "lng": 127.2345},
+            "XING-201": {"brand": "씽씽", "user_id": "cau_student3", "region": "내리 대학가 원룸촌", "lat": 37.0095, "lng": 127.2360},
+            "BEAM-301": {"brand": "빔(BEAM)", "user_id": "cau_delivery", "region": "중앙대 정문 광장", "lat": 37.0118, "lng": 127.2321}
+        };
 
-        const APP_WEIGHTS = {"일반 보행로(인도)": 2, "점자블록 위": 5, "횡단보도": 5, "버스정류장 앞": 4, "소화전 앞": 4};
-        const APP_BONUSES = {"해당 없음 (단순 주차)": 0, "통행을 완전히 막음 (길막)": 4, "상가/건물 출입구를 막음": 3, "차도나 자전거도로 침범": 2};
-        
-        // 범용 단속 가상 시드 데이터 
-        const SAMPLE_DATA = [
-            {scooter_id: "GCOO-3091", brand: "지쿠(GCOO)", location_type: "점자블록 위", region: "역삼동 인근", danger_score: 9, offsetX: -60, offsetY: -40, time: "오후 1:20"},
-            {scooter_id: "SWING-8821", brand: "스윙(SWING)", location_type: "횡단보도", region: "중앙 사거리", danger_score: 7, offsetX: 50, offsetY: -70, time: "오후 3:45"},
-            {scooter_id: "BEAM-0412", brand: "빔(BEAM)", location_type: "일반 보행로(인도)", region: "역 앞 골목", danger_score: 2, offsetX: -40, offsetY: 60, time: "오후 4:10"},
-            {scooter_id: "XING-9912", brand: "씽씽", location_type: "소화전 앞", region: "대로변 인도", danger_score: 8, offsetX: 70, offsetY: 40, time: "오후 5:02"}
-        ];
-
-        // 브라우저 최초 로드 시 데이터 세팅
-        if (!localStorage.getItem("LOCAL_KICK_DB")) {
-            localStorage.setItem("LOCAL_KICK_DB", JSON.stringify(SAMPLE_DATA));
-        }
-
-        async function startCamera() {
-            try {
-                const video = document.getElementById('liveCameraFeed');
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                    video.srcObject = cameraStream;
-                }
-            } catch (err) { console.log("카메라 권한 오류", err); }
-        }
-
-        function stopCamera() {
-            if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); cameraStream = null; }
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-             // 페이지 로드 시 첫 화면 세팅
-             showScreen('role');
-        });
-
-        function showScreen(screenId) {
-            stopCamera();
-            document.getElementById('screenRole').className = "hidden";
-            document.getElementById('screenRegion').className = "hidden";
-            document.getElementById('screenDriverLogin').className = "hidden";
-            document.getElementById('screenCitizen').className = "hidden";
-            document.getElementById('screenDriver').className = "hidden";
-
-            if (screenId === 'role') {
-                document.getElementById('screenRole').className = "w-full max-w-sm mx-auto flex-1 flex flex-col justify-between p-6 pt-16 pb-8";
-            } else if (screenId === 'region') {
-                document.getElementById('screenRegion').className = "w-full max-w-sm mx-auto flex-1 flex flex-col justify-between p-6 pt-16 pb-8";
-                resetNextButton();
-            } else if (screenId === 'driverLogin') {
-                document.getElementById('screenDriverLogin').className = "w-full max-w-sm mx-auto flex-1 flex flex-col justify-between p-6 pt-16 pb-8";
-            } else if (screenId === 'citizen') {
-                document.getElementById('screenCitizen').className = "w-full max-w-sm mx-auto h-screen flex flex-col relative overflow-hidden bg-[#09090b]";
-                document.getElementById('citizenDisplayArea').innerText = appState.detectedAddress;
-                switchAppMode('qr');
-            } else if (screenId === 'driver') {
-                document.getElementById('screenDriver').className = "w-full max-w-sm mx-auto h-screen flex flex-col overflow-hidden relative bg-[#09090b]";
-                document.getElementById('driverDisplayArea').innerText = appState.detectedAddress;
-                document.getElementById('driverCompanyBadge').innerText = appState.driverCompany;
-                document.getElementById('driverProfileCompany').innerText = `${appState.driverCompany} 소속 기사`;
-                switchDriverSubTab('map'); 
+        function switchMode(mode) {
+            const qrContainer = document.getElementById('qrContainer'); const manualContainer = document.getElementById('manualContainer');
+            const btnQr = document.getElementById('btnQr'); const btnManual = document.getElementById('btnManual');
+            
+            if (mode === 'qr') { 
+                qrContainer.className = "block"; manualContainer.className = "hidden"; 
+                btnQr.className = "p-3 rounded-xl font-bold border-2 border-indigo-600 bg-indigo-50 text-indigo-600 text-xs cursor-pointer";
+                btnManual.className = "p-3 rounded-xl font-bold border-2 border-slate-200 text-slate-600 text-xs cursor-pointer";
+                startQrScanner(); 
+            }
+            else { 
+                qrContainer.className = "hidden"; manualContainer.className = "block"; 
+                btnManual.className = "p-3 rounded-xl font-bold border-2 border-indigo-600 bg-indigo-50 text-indigo-600 text-xs cursor-pointer";
+                btnQr.className = "p-3 rounded-xl font-bold border-2 border-slate-200 text-slate-600 text-xs cursor-pointer";
+                if(html5QrcodeScanner) { html5QrcodeScanner.clear().catch(err=>{}); } 
             }
         }
 
-        function selectRole(role) { appState.userRole = role; showScreen('region'); }
-
-        function requestGPSLocation() {
-            const panel = document.getElementById('geoFeedbackPanel');
-            panel.className = "p-4 bg-[#18181b] border border-[#27272a] text-blue-500 rounded-xl text-center text-xs block";
-            panel.innerHTML = "위치 정보 스캔 중...";
+        function startQrScanner() {
+            if (html5QrcodeScanner && html5QrcodeScanner.getState() === 2) return;
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 180 });
+            html5QrcodeScanner.render((text) => { document.getElementById('scooterId').value = text.toUpperCase().trim(); switchMode('manual'); });
+            
             setTimeout(() => {
-                appState.lat = 37.5665; appState.lng = 126.9780;
-                appState.detectedAddress = "현 위치 스마트 매칭 권역";
-                panel.className = "p-4 bg-blue-500/10 border border-blue-500/20 text-[#f4f4f5] rounded-xl text-left text-xs space-y-1 block";
-                panel.innerHTML = `<p class="font-bold text-white text-xs">${appState.detectedAddress}</p><p class="text-[#a1a1aa] text-[10px]">GPS 센서 연결됨</p>`;
-                document.getElementById('btnRegionNext').className = "w-full bg-blue-600 text-white py-4 rounded-xl text-sm font-bold cursor-pointer block text-center active:bg-blue-700 transition-all";
-            }, 600);
+                const b1 = document.getElementById('html5-qrcode-button-camera-start');
+                const b2 = document.getElementById('html5-qrcode-button-camera-stop');
+                const b3 = document.getElementById('html5-qrcode-button-camera-permission');
+                if (b3) b3.innerText = "🔒 카메라 권한 체크/허용";
+                if (b1) b1.innerText = "📷 카메라 작동 시작";
+                if (b2) b2.innerText = "🛑 스캔 정지";
+            }, 150);
         }
+        window.onload = startQrScanner;
 
-        function searchAddressManual() {
-            const query = document.getElementById('addressSearchInput').value.trim(); if(!query) return;
-            const panel = document.getElementById('geoFeedbackPanel');
-            panel.className = "p-4 bg-[#18181b] border border-[#27272a] text-[#a1a1aa] rounded-xl text-center text-xs block";
-            panel.innerHTML = "검색 중...";
-            setTimeout(() => {
-                appState.lat = 37.5412; appState.lng = 127.0624; 
-                appState.detectedAddress = `${query} 일대`;
-                panel.className = "p-4 bg-blue-500/10 border border-blue-500/20 text-[#f4f4f5] rounded-xl text-left text-xs space-y-1 block";
-                panel.innerHTML = `<p class="font-bold text-white text-xs">${appState.detectedAddress}</p><p class="text-[#a1a1aa] text-[10px]">행정 구역 확인됨</p>`;
-                document.getElementById('btnRegionNext').className = "w-full bg-blue-600 text-white py-4 rounded-xl text-sm font-bold cursor-pointer block text-center active:bg-blue-700 transition-all";
-            }, 500);
-        }
-
-        function onSearchInput() { if(!document.getElementById('addressSearchInput').value.trim()) resetNextButton(); }
-        function resetNextButton() { document.getElementById('btnRegionNext').className = "w-full bg-[#18181b] border border-[#27272a] text-[#52525b] py-4 rounded-xl text-sm font-bold pointer-events-none text-center block transition-all"; }
-        
-        function submitRegion() { 
-            if (appState.userRole === 'driver') showScreen('driverLogin');
-            else showScreen(appState.userRole); 
-        }
-
-        function loginAsCompany(companyName) { appState.driverCompany = companyName; showScreen('driver'); }
-        function logoutDriver() { appState.driverCompany = null; showScreen('role'); }
-
-        function switchAppMode(mode) {
-            if (mode === 'qr') {
-                document.getElementById('appQrContainer').className = "block space-y-2";
-                document.getElementById('appManualContainer').className = "hidden";
-                document.getElementById('btnAppQr').className = "py-2 rounded-lg font-bold bg-[#27272a] text-white text-[11px] transition-all cursor-pointer";
-                document.getElementById('btnAppManual').className = "py-2 rounded-lg font-bold text-[#a1a1aa] text-[11px] transition-all cursor-pointer";
-                startCamera();
-            } else {
-                document.getElementById('appQrContainer').className = "hidden";
-                document.getElementById('appManualContainer').className = "block";
-                document.getElementById('btnAppManual').className = "py-2 rounded-lg font-bold bg-[#27272a] text-white text-[11px] transition-all cursor-pointer";
-                document.getElementById('btnAppQr').className = "py-2 rounded-lg font-bold text-[#a1a1aa] text-[11px] transition-all cursor-pointer";
-                stopCamera();
-            }
-        }
-
-        function onAppImageUpload(event) {
-            const file = event.target.files[0]; if (!file) return;
+        function previewImage(event) {
             const reader = new FileReader();
             reader.onload = function() {
-                document.getElementById('appImagePreview').src = reader.result;
-                document.getElementById('appImagePreview').classList.remove('hidden');
-                document.getElementById('aiAnalysisPanel').classList.remove('hidden');
-                document.getElementById('aiAnalysisPanel').innerHTML = "AI 이미지 스캔 중...";
-                setTimeout(() => { 
-                    document.getElementById('aiAnalysisPanel').innerHTML = "🤖 AI Vision 식별 완료 (일치율 98.4%)"; 
-                    appState.hasUploadedImage = true;
-                }, 800);
+                const preview = document.getElementById('imagePreview');
+                preview.src = reader.result; preview.classList.remove('hidden');
+                document.getElementById('uploadPlaceholder').classList.add('hidden');
+                isImageAttached = true;
             }
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(event.target.files[0]);
         }
 
-        // 서버 없이 로컬 메모리 스토리지로 완벽 처리
-        function submitCitizenReport() {
-            let scooterId = document.getElementById('appScooterId').value.toUpperCase().trim();
-            if(!scooterId) scooterId = "GCOO-" + Math.floor(Math.random() * 8000 + 1000);
+        function submitReport() {
+            const scooterId = document.getElementById('scooterId').value.toUpperCase().trim();
+            const locationType = document.querySelector('input[name="locationGroup"]:checked').value;
+            const obstructionType = document.querySelector('input[name="obstructionGroup"]:checked').value;
+            const resultBox = document.getElementById('resultBox');
+            if(!scooterId) { alert("고유 ID를 입력해 주세요."); return; }
 
-            const locationType = document.getElementById('appLocationType').value;
-            const obstructionType = document.getElementById('appObstructionType').value;
-            const totalDangerScore = (APP_WEIGHTS[locationType] || 2) + (APP_BONUSES[obstructionType] || 0);
+            const totalDangerScore = (BASE_WEIGHTS[locationType] || 1) + (OBSTRUCTION_BONUS[obstructionType] || 0);
+            let brandName = "지쿠(GCOO)"; let fineMessage = ""; let targetRegion = "중앙대 안성캠";
+            let lat = 37.0118; let lng = 127.2321;
 
-            // 입력 텍스트 판정 알고리즘
-            let brand = "지쿠(GCOO)";
-            if (scooterId.includes("XING") || scooterId.includes("씽씽")) brand = "씽씽";
-            else if (scooterId.includes("BEAM") || scooterId.includes("빔")) brand = "빔(BEAM)";
-            else if (scooterId.includes("SWNG") || scooterId.includes("SWING") || scooterId.includes("스윙")) brand = "스윙(SWING)";
+            // 입력을 기반으로 가상 매칭 프로세스
+            if (scooterId in last_ride_db) {
+                const ride = last_ride_db[scooterId]; brandName = ride.brand; targetRegion = ride.region; lat = ride.lat; lng = ride.lng;
+                fineMessage = `\n🚨 [벌금 부과] 이용자 '${ride.user_id}' -> 과태료 ${(totalDangerScore * 10000).toLocaleString()}원 청구`;
+            } else {
+                // 시드에 없는 새로운 기기 입력 처리 알고리즘
+                if (scooterId.includes("XING") || scooterId.includes("씽씽")) brandName = "씽씽";
+                else if (scooterId.includes("BEAM") || scooterId.includes("빔")) brandName = "빔(BEAM)";
+                else if (scooterId.includes("SWNG") || scooterId.includes("SWING") || scooterId.includes("스윙")) brandName = "스윙(SWING)";
+            }
 
-            const timestamp = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+            resultBox.classList.remove('hidden');
+            resultBox.innerHTML = `[SYSTEM APP LOG]\n➔ 소속사: ${brandName}\n➔ 위험 등급합: ${totalDangerScore}점\n➔ 결과: 관제소 전송 완료.` + fineMessage;
+
+            const newTask = { scooter_id: scooterId, brand: brandName, region: targetRegion, location_type: locationType, obstruction_type: obstructionType, danger_score: totalDangerScore, lat: lat, lng: lng, time: new Date().toLocaleTimeString() };
+            let currentTasks = JSON.parse(localStorage.getItem(brandName)) || [];
+            currentTasks.push(newTask); localStorage.setItem(brandName, JSON.stringify(currentTasks));
+
+            // 타임라인 핸들러 초기화 및 가동
+            const bar = document.getElementById('timelineProgress');
+            const d1 = document.getElementById('step1Dot'); const d2 = document.getElementById('step2Dot'); const d3 = document.getElementById('step3Dot');
+            const t1 = document.getElementById('step1Text'); const t2 = document.getElementById('step2Text'); const t3 = document.getElementById('step3Text');
             
-            // 신규 단속 데이터 객체 빌드
-            const newTask = { 
-                scooter_id: scooterId, 
-                brand: brand, 
-                location_type: locationType, 
-                region: appState.detectedAddress,
-                danger_score: totalDangerScore, 
-                time: timestamp, 
-                offsetX: Math.floor(Math.random() * 140) - 70, 
-                offsetY: Math.floor(Math.random() * 140) - 70 
-            };
-
-            // 기사용 전체 원본 데이터 풀에 저장
-            let currentTasks = JSON.parse(localStorage.getItem("LOCAL_KICK_DB")) || [];
-            currentTasks.push(newTask); 
-            localStorage.setItem("LOCAL_KICK_DB", JSON.stringify(currentTasks));
-
-            // 내 신고 내역함 배열에 저장
-            let myReports = JSON.parse(localStorage.getItem("MY_REPORTS")) || [];
-            myReports.unshift({ scooter_id: scooterId, location_type: locationType, time: timestamp, status: "접수 완료" }); 
-            localStorage.setItem("MY_REPORTS", JSON.stringify(myReports));
-
-            // 타임라인 애니메이션 트리거
-            document.getElementById('appTimelineBox').classList.remove('hidden');
-            const n1 = document.getElementById('node1'); const n2 = document.getElementById('node2'); const n3 = document.getElementById('node3');
-            const t1 = document.getElementById('node1Text'); const t2 = document.getElementById('node2Text'); const t3 = document.getElementById('node3Text');
-            const bar = document.getElementById('appTimelineProgress');
-
-            [n1,n2,n3].forEach(n => n.className = "w-4 h-4 rounded-full bg-[#27272a] text-transparent flex items-center justify-center transition-colors");
-            [t1,t2,t3].forEach(t => t.className = "text-[#52525b] font-medium text-[10px]");
+            document.getElementById('timelineBox').classList.remove('hidden');
+            d1.className = "w-5 h-5 rounded-full text-white flex items-center justify-center font-bold mb-1 transition-colors bg-slate-200";
+            d2.className = "w-5 h-5 rounded-full text-white flex items-center justify-center font-bold mb-1 transition-colors bg-slate-200";
+            d3.className = "w-5 h-5 rounded-full text-white flex items-center justify-center font-bold mb-1 transition-colors bg-slate-200";
+            t1.className = "text-slate-400 font-medium"; t2.className = "text-slate-400 font-medium"; t3.className = "text-slate-400 font-medium";
             bar.style.width = "0%";
 
-            setTimeout(() => { n1.className = "w-4 h-4 rounded-full bg-blue-500 transition-colors"; t1.className = "text-blue-500 font-bold text-[10px]"; }, 100);
             setTimeout(() => { 
+                d1.className = "w-5 h-5 rounded-full text-white flex items-center justify-center font-bold mb-1 transition-colors bg-emerald-500"; 
+                t1.className = "text-emerald-600 font-bold";
                 bar.style.width = "50%"; 
-                n2.className = "w-4 h-4 rounded-full bg-blue-500 transition-colors"; t2.className = "text-blue-500 font-bold text-[10px]"; 
-                
-                const fineAmount = totalDangerScore * 10000;
-                let alertMsg = `[신고 정상 접수 완료]\n\n➔ 분석 소속사: ${brand}\n➔ 최종 위험도: ${totalDangerScore}점\n🚨 직전 이용자 과실 입증으로 과태료 ${fineAmount.toLocaleString()}원이 청구되었습니다.`;
-                if(appState.hasUploadedImage) {
-                    alertMsg += `\n\n🤖 AI Computer Vision 교차 검증 검증 성공!`;
-                }
-                alert(alertMsg);
-            }, 1000);
-            setTimeout(() => { bar.style.width = "100%"; n3.className = "w-4 h-4 rounded-full bg-blue-500 transition-colors"; t3.className = "text-blue-500 font-bold text-[10px]"; }, 2200);
-        }
-
-        function toggleCitizenHistory() {
-            const modal = document.getElementById('citizenHistoryModal'); const listContainer = document.getElementById('citizenHistoryList');
-            if (modal.classList.contains('translate-y-full')) {
-                modal.classList.remove('translate-y-full'); listContainer.innerHTML = '';
-                let myReports = JSON.parse(localStorage.getItem("MY_REPORTS")) || [];
-                if (myReports.length === 0) myReports.push({ scooter_id: "GCOO-SAMPLE", location_type: "점자블록 위", time: "오전 10:20", status: "수거 완료" });
-                myReports.forEach(report => {
-                    const statusColor = report.status.includes('완료') ? "text-blue-400 bg-blue-500/10 border-blue-500/20" : "text-[#a1a1aa] bg-[#27272a] border-[#3f3f46]";
-                    listContainer.innerHTML += `
-                        <div class="bg-[#18181b] border border-[#27272a] rounded-xl p-4">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-xs font-bold text-white font-mono">${report.scooter_id}</span>
-                                <span class="text-[9px] px-2 py-1 border rounded-md font-bold ${statusColor}">${report.status}</span>
-                            </div>
-                            <div class="text-[10px] text-[#a1a1aa] flex justify-between"><span>📍 ${report.location_type}</span><span>${report.time}</span></div>
-                        </div>`;
-                });
-            } else { modal.classList.add('translate-y-full'); }
-        }
-
-        function switchDriverSubTab(tabMode) {
-            const subMap = document.getElementById('driverSubMap'); const subList = document.getElementById('driverSubList'); const subPayout = document.getElementById('driverSubPayout');
-            const tabMapBtn = document.getElementById('navTabMap'); const tabListBtn = document.getElementById('navTabList'); const tabPayoutBtn = document.getElementById('navTabPayout');
-            const headerTitle = document.getElementById('driverHeaderTitle');
-
-            subMap.className = "absolute inset-0 map-bg hidden z-10"; subList.className = "absolute inset-0 bg-[#09090b] p-5 overflow-y-auto hidden z-10 space-y-4"; subPayout.className = "absolute inset-0 bg-[#09090b] p-5 overflow-y-auto hidden z-10 space-y-4";
-            [tabMapBtn, tabListBtn, tabPayoutBtn].forEach(btn => btn.className = "flex flex-col items-center justify-center text-[#52525b] font-medium transition-all cursor-pointer");
-
-            if (tabMode === 'map') {
-                subMap.className = "absolute inset-0 map-bg block z-10"; tabMapBtn.className = "flex flex-col items-center justify-center text-blue-500 font-bold transition-all"; headerTitle.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> 운행 지도`;
-            } else if (tabMode === 'list') {
-                subList.className = "absolute inset-0 bg-[#09090b] p-5 overflow-y-auto block z-10 space-y-4"; tabListBtn.className = "flex flex-col items-center justify-center text-blue-500 font-bold transition-all"; headerTitle.innerHTML = `우선순위 목록`;
-            } else if (tabMode === 'payout') {
-                subPayout.className = "absolute inset-0 bg-[#09090b] p-5 overflow-y-auto block z-10 space-y-4"; tabPayoutBtn.className = "flex flex-col items-center justify-center text-blue-500 font-bold transition-all"; headerTitle.innerHTML = `정산 현황`; updatePayoutStatsView();
-            }
-            renderDriverCoreEngine();
-        }
-
-        // 수거 기사 로그인 소속 회사 데이터 필터링 렌더링 시스템
-        function renderDriverCoreEngine() {
-            const markersContainer = document.getElementById('mapMarkersContainer'); const cardListContainer = document.getElementById('driverCardListContainer');
-            markersContainer.innerHTML = ''; cardListContainer.innerHTML = '';
-
-            let storedTasks = JSON.parse(localStorage.getItem("LOCAL_KICK_DB")) || [];
-
-            // ★ 내부 필터 가동: 전체 기기 중 기사의 소속 회사 제품만 필터링하여 출력
-            const companyTasks = storedTasks.filter(task => task.brand === appState.driverCompany);
-
-            companyTasks.sort((a,b) => b.danger_score - a.danger_score);
-            document.getElementById('listCountBadge').innerText = `${companyTasks.length}개 대기`;
-
-            companyTasks.forEach((task) => {
-                let markerColor = "#ef4444"; if (task.danger_score < 4) markerColor = "#eab308"; else if (task.danger_score < 7) markerColor = "#f97316";
-
-                const markerEl = document.createElement('div');
-                markerEl.className = "absolute pulse-marker w-3 h-3 rounded-full cursor-pointer z-20 transition-all duration-300";
-                markerEl.style.backgroundColor = markerColor; markerEl.style.left = `calc(50% + ${task.offsetX}px)`; markerEl.style.top = `calc(50% + ${task.offsetY}px)`;
-                markersContainer.appendChild(markerEl);
-
-                // 원본 배열(storedTasks) 내 타겟 엘리먼트 고유 인덱스 트래킹
-                const realIndex = storedTasks.findIndex(t => t.scooter_id === task.scooter_id);
-
-                const cardEl = document.createElement('div');
-                cardEl.className = "bg-[#18181b] border border-[#27272a] rounded-2xl p-4 flex flex-col transition-all";
-                cardEl.innerHTML = `
-                    <div class="flex justify-between items-start w-full">
-                        <div class="space-y-1 text-left">
-                            <div class="flex items-center space-x-2">
-                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${markerColor}"></span>
-                                <span class="text-xs font-bold text-white font-mono">${task.scooter_id}</span>
-                            </div>
-                            <p class="text-[11px] text-[#a1a1aa]">${task.location_type} <span class="text-[10px] text-[#52525b]">(${task.region})</span></p>
-                        </div>
-                        <span class="text-[9px] px-2 py-0.5 rounded font-bold font-mono" style="background-color: ${markerColor}20; color: ${markerColor}">위험도 ${task.danger_score}점</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 mt-4 w-full">
-                        <button onclick="alert('길안내 시뮬레이션을 시작합니다. (지도 연동)')" class="text-[10px] bg-[#27272a] text-[#f4f4f5] py-2 rounded-lg font-bold text-center cursor-pointer active:scale-95">길안내</button>
-                        <button onclick="executeDriverClear(${realIndex})" class="text-[10px] col-span-2 bg-blue-600 text-white py-2 rounded-lg font-bold transition-colors cursor-pointer active:scale-95">수거완료</button>
-                    </div>
-                `;
-                cardListContainer.appendChild(cardEl);
-            });
-        }
-
-        function executeDriverClear(targetIndex) {
-            let storedTasks = JSON.parse(localStorage.getItem("LOCAL_KICK_DB")) || [];
-            const rewardUnit = 3000 + (storedTasks[targetIndex].danger_score * 500);
+            }, 100);
             
-            driverPerformance.totalCleared += 1; 
-            driverPerformance.totalMoney += rewardUnit;
-            
-            alert(`[수거 완료]\n\n실적이 정상 승인되었습니다.\n+${rewardUnit.toLocaleString()}원 적립`);
-            
-            storedTasks.splice(targetIndex, 1); 
-            localStorage.setItem("LOCAL_KICK_DB", JSON.stringify(storedTasks));
-            renderDriverCoreEngine();
-        }
-
-        function updatePayoutStatsView() {
-            document.getElementById('payoutCount').innerText = `${driverPerformance.totalCleared}건`; document.getElementById('payoutMoney').innerText = `${driverPerformance.totalMoney.toLocaleString()}원`;
-            const percent = Math.min(Math.round((driverPerformance.totalCleared / 10) * 100), 100);
-            document.getElementById('payoutPercent').innerText = `${percent}%`; document.getElementById('payoutProgressBar').style.width = `${percent}%`;
+            setTimeout(() => { 
+                d2.className = "w-5 h-5 rounded-full text-white flex items-center justify-center font-bold mb-1 transition-colors bg-indigo-500"; 
+                t2.className = "text-indigo-600 font-bold";
+                bar.style.width = "100%"; 
+                d3.className = "w-5 h-5 rounded-full text-white flex items-center justify-center font-bold mb-1 transition-colors bg-amber-500";
+                t3.className = "text-amber-600 font-bold";
+            }, 1500);
         }
     </script>
 </body>
