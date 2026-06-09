@@ -107,9 +107,6 @@
             <button onclick="loginAsCompany('씽씽')" class="w-full bg-[#18181b] border border-[#27272a] hover:border-orange-500/50 rounded-xl p-4 text-left font-bold text-sm text-white flex justify-between items-center transition-all cursor-pointer">
                 <span>씽씽 (XING)</span> <span class="text-xs text-orange-500 font-mono">Select ➔</span>
             </button>
-            <button onclick="loginAsCompany('다트(DART)')" class="w-full bg-[#18181b] border border-[#27272a] hover:border-blue-500/50 rounded-xl p-4 text-left font-bold text-sm text-white flex justify-between items-center transition-all cursor-pointer">
-                <span>다트 (DART)</span> <span class="text-xs text-blue-500 font-mono">Select ➔</span>
-            </button>
         </div>
 
         <div class="pt-2">
@@ -270,9 +267,26 @@
     </div>
 
     <script>
-        const appState = { userRole: null, driverCompany: null, detectedAddress: "중앙대 정문 앞", lat: 37.0118, lng: 127.2321, hasUploadedImage: false };
+        // 자급자족을 위한 로컬 상태 관리 시스템
+        const appState = { userRole: null, driverCompany: null, detectedAddress: "내 주변 권역", lat: 37.5665, lng: 126.9780, hasUploadedImage: false };
         let driverPerformance = { totalCleared: 0, totalMoney: 0 };
         let cameraStream = null;
+
+        const APP_WEIGHTS = {"일반 보행로(인도)": 2, "점자블록 위": 5, "횡단보도": 5, "버스정류장 앞": 4, "소화전 앞": 4};
+        const APP_BONUSES = {"해당 없음 (단순 주차)": 0, "통행을 완전히 막음 (길막)": 4, "상가/건물 출입구를 막음": 3, "차도나 자전거도로 침범": 2};
+        
+        // 범용 단속 가상 시드 데이터 
+        const SAMPLE_DATA = [
+            {scooter_id: "GCOO-3091", brand: "지쿠(GCOO)", location_type: "점자블록 위", region: "역삼동 인근", danger_score: 9, offsetX: -60, offsetY: -40, time: "오후 1:20"},
+            {scooter_id: "SWING-8821", brand: "스윙(SWING)", location_type: "횡단보도", region: "중앙 사거리", danger_score: 7, offsetX: 50, offsetY: -70, time: "오후 3:45"},
+            {scooter_id: "BEAM-0412", brand: "빔(BEAM)", location_type: "일반 보행로(인도)", region: "역 앞 골목", danger_score: 2, offsetX: -40, offsetY: 60, time: "오후 4:10"},
+            {scooter_id: "XING-9912", brand: "씽씽", location_type: "소화전 앞", region: "대로변 인도", danger_score: 8, offsetX: 70, offsetY: 40, time: "오후 5:02"}
+        ];
+
+        // 브라우저 최초 로드 시 데이터 세팅
+        if (!localStorage.getItem("LOCAL_KICK_DB")) {
+            localStorage.setItem("LOCAL_KICK_DB", JSON.stringify(SAMPLE_DATA));
+        }
 
         async function startCamera() {
             try {
@@ -287,6 +301,11 @@
         function stopCamera() {
             if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); cameraStream = null; }
         }
+
+        document.addEventListener("DOMContentLoaded", () => {
+             // 페이지 로드 시 첫 화면 세팅
+             showScreen('role');
+        });
 
         function showScreen(screenId) {
             stopCamera();
@@ -323,10 +342,10 @@
             panel.className = "p-4 bg-[#18181b] border border-[#27272a] text-blue-500 rounded-xl text-center text-xs block";
             panel.innerHTML = "위치 정보 스캔 중...";
             setTimeout(() => {
-                appState.lat = 37.0118; appState.lng = 127.2321;
-                appState.detectedAddress = "중앙대 정문 앞";
+                appState.lat = 37.5665; appState.lng = 126.9780;
+                appState.detectedAddress = "현 위치 스마트 매칭 권역";
                 panel.className = "p-4 bg-blue-500/10 border border-blue-500/20 text-[#f4f4f5] rounded-xl text-left text-xs space-y-1 block";
-                panel.innerHTML = `<p class="font-bold text-white text-xs">${appState.detectedAddress}</p><p class="text-[#a1a1aa] text-[10px]">GPS 연결됨</p>`;
+                panel.innerHTML = `<p class="font-bold text-white text-xs">${appState.detectedAddress}</p><p class="text-[#a1a1aa] text-[10px]">GPS 센서 연결됨</p>`;
                 document.getElementById('btnRegionNext').className = "w-full bg-blue-600 text-white py-4 rounded-xl text-sm font-bold cursor-pointer block text-center active:bg-blue-700 transition-all";
             }, 600);
         }
@@ -337,9 +356,10 @@
             panel.className = "p-4 bg-[#18181b] border border-[#27272a] text-[#a1a1aa] rounded-xl text-center text-xs block";
             panel.innerHTML = "검색 중...";
             setTimeout(() => {
-                appState.lat = 37.0101; appState.lng = 127.2345; appState.detectedAddress = `${query} (다빈치캠 주변)`;
+                appState.lat = 37.5412; appState.lng = 127.0624; 
+                appState.detectedAddress = `${query} 일대`;
                 panel.className = "p-4 bg-blue-500/10 border border-blue-500/20 text-[#f4f4f5] rounded-xl text-left text-xs space-y-1 block";
-                panel.innerHTML = `<p class="font-bold text-white text-xs">${appState.detectedAddress}</p><p class="text-[#a1a1aa] text-[10px]">검색 매칭됨</p>`;
+                panel.innerHTML = `<p class="font-bold text-white text-xs">${appState.detectedAddress}</p><p class="text-[#a1a1aa] text-[10px]">행정 구역 확인됨</p>`;
                 document.getElementById('btnRegionNext').className = "w-full bg-blue-600 text-white py-4 rounded-xl text-sm font-bold cursor-pointer block text-center active:bg-blue-700 transition-all";
             }, 500);
         }
@@ -378,69 +398,77 @@
                 document.getElementById('appImagePreview').src = reader.result;
                 document.getElementById('appImagePreview').classList.remove('hidden');
                 document.getElementById('aiAnalysisPanel').classList.remove('hidden');
-                document.getElementById('aiAnalysisPanel').innerHTML = "AI 스캔 중...";
+                document.getElementById('aiAnalysisPanel').innerHTML = "AI 이미지 스캔 중...";
                 setTimeout(() => { 
-                    document.getElementById('aiAnalysisPanel').innerHTML = "식별 성공 (98.4% 일치)"; 
+                    document.getElementById('aiAnalysisPanel').innerHTML = "🤖 AI Vision 식별 완료 (일치율 98.4%)"; 
                     appState.hasUploadedImage = true;
                 }, 800);
             }
             reader.readAsDataURL(file);
         }
 
-        // [수정] 파이썬 백엔드 API와 실시간 연동하도록 개조됨
-        async function submitCitizenReport() {
+        // 서버 없이 로컬 메모리 스토리지로 완벽 처리
+        function submitCitizenReport() {
             let scooterId = document.getElementById('appScooterId').value.toUpperCase().trim();
-            if(!scooterId) scooterId = "GCOO-101"; // 기본 셈플용 매칭 ID
+            if(!scooterId) scooterId = "GCOO-" + Math.floor(Math.random() * 8000 + 1000);
 
             const locationType = document.getElementById('appLocationType').value;
             const obstructionType = document.getElementById('appObstructionType').value;
+            const totalDangerScore = (APP_WEIGHTS[locationType] || 2) + (APP_BONUSES[obstructionType] || 0);
 
-            const payload = {
-                scooter_id: scooterId,
-                location_type: locationType,
-                obstruction_type: obstructionType,
-                has_image: appState.hasUploadedImage
+            // 입력 텍스트 판정 알고리즘
+            let brand = "지쿠(GCOO)";
+            if (scooterId.includes("XING") || scooterId.includes("씽씽")) brand = "씽씽";
+            else if (scooterId.includes("BEAM") || scooterId.includes("빔")) brand = "빔(BEAM)";
+            else if (scooterId.includes("SWNG") || scooterId.includes("SWING") || scooterId.includes("스윙")) brand = "스윙(SWING)";
+
+            const timestamp = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+            
+            // 신규 단속 데이터 객체 빌드
+            const newTask = { 
+                scooter_id: scooterId, 
+                brand: brand, 
+                location_type: locationType, 
+                region: appState.detectedAddress,
+                danger_score: totalDangerScore, 
+                time: timestamp, 
+                offsetX: Math.floor(Math.random() * 140) - 70, 
+                offsetY: Math.floor(Math.random() * 140) - 70 
             };
 
-            try {
-                // 파이썬 Flask 서버로 POST 요청 전송
-                const response = await fetch('/api/report', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
+            // 기사용 전체 원본 데이터 풀에 저장
+            let currentTasks = JSON.parse(localStorage.getItem("LOCAL_KICK_DB")) || [];
+            currentTasks.push(newTask); 
+            localStorage.setItem("LOCAL_KICK_DB", JSON.stringify(currentTasks));
 
-                if(result.status === "SUCCESS") {
-                    // 상단 내역함 임시 저장을 위한 로컬스토리지 보완
-                    let myReports = JSON.parse(localStorage.getItem("MY_REPORTS")) || [];
-                    myReports.unshift({ scooter_id: scooterId, location_type: locationType, time: "방금 전", status: "접수 완료" });
-                    localStorage.setItem("MY_REPORTS", JSON.stringify(myReports));
+            // 내 신고 내역함 배열에 저장
+            let myReports = JSON.parse(localStorage.getItem("MY_REPORTS")) || [];
+            myReports.unshift({ scooter_id: scooterId, location_type: locationType, time: timestamp, status: "접수 완료" }); 
+            localStorage.setItem("MY_REPORTS", JSON.stringify(myReports));
 
-                    // 타임라인 애니메이션 핸들링
-                    document.getElementById('appTimelineBox').classList.remove('hidden');
-                    const n1 = document.getElementById('node1'); const n2 = document.getElementById('node2'); const n3 = document.getElementById('node3');
-                    const t1 = document.getElementById('node1Text'); const t2 = document.getElementById('node2Text'); const t3 = document.getElementById('node3Text');
-                    const bar = document.getElementById('appTimelineProgress');
+            // 타임라인 애니메이션 트리거
+            document.getElementById('appTimelineBox').classList.remove('hidden');
+            const n1 = document.getElementById('node1'); const n2 = document.getElementById('node2'); const n3 = document.getElementById('node3');
+            const t1 = document.getElementById('node1Text'); const t2 = document.getElementById('node2Text'); const t3 = document.getElementById('node3Text');
+            const bar = document.getElementById('appTimelineProgress');
 
-                    [n1,n2,n3].forEach(n => n.className = "w-4 h-4 rounded-full bg-[#27272a] text-transparent flex items-center justify-center transition-colors");
-                    [t1,t2,t3].forEach(t => t.className = "text-[#52525b] font-medium text-[10px]");
-                    bar.style.width = "0%";
+            [n1,n2,n3].forEach(n => n.className = "w-4 h-4 rounded-full bg-[#27272a] text-transparent flex items-center justify-center transition-colors");
+            [t1,t2,t3].forEach(t => t.className = "text-[#52525b] font-medium text-[10px]");
+            bar.style.width = "0%";
 
-                    setTimeout(() => { n1.className = "w-4 h-4 rounded-full bg-blue-500 transition-colors"; t1.className = "text-blue-500 font-bold text-[10px]"; }, 100);
-                    setTimeout(() => { 
-                        bar.style.width = result.status_step === 2 ? "50%" : "100%"; 
-                        n2.className = "w-4 h-4 rounded-full bg-blue-500 transition-colors"; t2.className = "text-blue-500 font-bold text-[10px]"; 
-                        alert(`[단속 분석 결과 완료]\n\n${result.message}`); 
-                    }, 1000);
-                    
-                    if(result.status_step === 2) {
-                        setTimeout(() => { bar.style.width = "100%"; n3.className = "w-4 h-4 rounded-full bg-blue-500 transition-colors"; t3.className = "text-blue-500 font-bold text-[10px]"; }, 2200);
-                    }
+            setTimeout(() => { n1.className = "w-4 h-4 rounded-full bg-blue-500 transition-colors"; t1.className = "text-blue-500 font-bold text-[10px]"; }, 100);
+            setTimeout(() => { 
+                bar.style.width = "50%"; 
+                n2.className = "w-4 h-4 rounded-full bg-blue-500 transition-colors"; t2.className = "text-blue-500 font-bold text-[10px]"; 
+                
+                const fineAmount = totalDangerScore * 10000;
+                let alertMsg = `[신고 정상 접수 완료]\n\n➔ 분석 소속사: ${brand}\n➔ 최종 위험도: ${totalDangerScore}점\n🚨 직전 이용자 과실 입증으로 과태료 ${fineAmount.toLocaleString()}원이 청구되었습니다.`;
+                if(appState.hasUploadedImage) {
+                    alertMsg += `\n\n🤖 AI Computer Vision 교차 검증 검증 성공!`;
                 }
-            } catch (err) {
-                alert("서버 연결 실패. 파이썬 app.py 코드가 실행중인지 확인하세요.");
-            }
+                alert(alertMsg);
+            }, 1000);
+            setTimeout(() => { bar.style.width = "100%"; n3.className = "w-4 h-4 rounded-full bg-blue-500 transition-colors"; t3.className = "text-blue-500 font-bold text-[10px]"; }, 2200);
         }
 
         function toggleCitizenHistory() {
@@ -448,7 +476,7 @@
             if (modal.classList.contains('translate-y-full')) {
                 modal.classList.remove('translate-y-full'); listContainer.innerHTML = '';
                 let myReports = JSON.parse(localStorage.getItem("MY_REPORTS")) || [];
-                if (myReports.length === 0) myReports.push({ scooter_id: "GCOO-101", location_type: "점자블록 위", time: "오전 11:20", status: "수거 완료" });
+                if (myReports.length === 0) myReports.push({ scooter_id: "GCOO-SAMPLE", location_type: "점자블록 위", time: "오전 10:20", status: "수거 완료" });
                 myReports.forEach(report => {
                     const statusColor = report.status.includes('완료') ? "text-blue-400 bg-blue-500/10 border-blue-500/20" : "text-[#a1a1aa] bg-[#27272a] border-[#3f3f46]";
                     listContainer.innerHTML += `
@@ -481,67 +509,63 @@
             renderDriverCoreEngine();
         }
 
-        // [수정] 파이썬 /api/driver/tasks?brand= 형식의 데이터 구조 분해 연동
-        async function renderDriverCoreEngine() {
+        // 수거 기사 로그인 소속 회사 데이터 필터링 렌더링 시스템
+        function renderDriverCoreEngine() {
             const markersContainer = document.getElementById('mapMarkersContainer'); const cardListContainer = document.getElementById('driverCardListContainer');
             markersContainer.innerHTML = ''; cardListContainer.innerHTML = '';
 
-            try {
-                // 파이썬 서버에 동적 쿼리스트링 전달하여 자사 브랜드 단속 데이터만 로드
-                const response = await fetch(`/api/driver/tasks?brand=${encodeURIComponent(appState.driverCompany)}`);
-                const resData = await response.json();
-                
-                // 파이썬 전송 스펙 규칙 매칭 (.tasks 내부 접근)
-                const companyTasks = resData.tasks || [];
+            let storedTasks = JSON.parse(localStorage.getItem("LOCAL_KICK_DB")) || [];
 
-                document.getElementById('listCountBadge').innerText = `${companyTasks.length}개 대기`;
+            // ★ 내부 필터 가동: 전체 기기 중 기사의 소속 회사 제품만 필터링하여 출력
+            const companyTasks = storedTasks.filter(task => task.brand === appState.driverCompany);
 
-                companyTasks.forEach((task, index) => {
-                    let markerColor = "#ef4444"; if (task.danger_score < 4) markerColor = "#eab308"; else if (task.danger_score < 7) markerColor = "#f97316";
+            companyTasks.sort((a,b) => b.danger_score - a.danger_score);
+            document.getElementById('listCountBadge').innerText = `${companyTasks.length}개 대기`;
 
-                    // 중앙대 기준 위치 분산용 가상 마커 오프셋 계산 계산
-                    const visualX = (task.lng - appState.lng) * 100000;
-                    const visualY = (task.lat - appState.lat) * -100000;
+            companyTasks.forEach((task) => {
+                let markerColor = "#ef4444"; if (task.danger_score < 4) markerColor = "#eab308"; else if (task.danger_score < 7) markerColor = "#f97316";
 
-                    const markerEl = document.createElement('div');
-                    markerEl.className = "absolute pulse-marker w-3 h-3 rounded-full cursor-pointer z-20 transition-all duration-300";
-                    markerEl.style.backgroundColor = markerColor; 
-                    markerEl.style.left = `calc(50% + ${visualX}px)`; 
-                    markerEl.style.top = `calc(50% + ${visualY}px)`;
-                    markersContainer.appendChild(markerEl);
+                const markerEl = document.createElement('div');
+                markerEl.className = "absolute pulse-marker w-3 h-3 rounded-full cursor-pointer z-20 transition-all duration-300";
+                markerEl.style.backgroundColor = markerColor; markerEl.style.left = `calc(50% + ${task.offsetX}px)`; markerEl.style.top = `calc(50% + ${task.offsetY}px)`;
+                markersContainer.appendChild(markerEl);
 
-                    const kakaoNaviLink = `https://map.kakao.com/link/to/${task.scooter_id},${task.lat},${task.lng}`;
+                // 원본 배열(storedTasks) 내 타겟 엘리먼트 고유 인덱스 트래킹
+                const realIndex = storedTasks.findIndex(t => t.scooter_id === task.scooter_id);
 
-                    const cardEl = document.createElement('div');
-                    cardEl.className = "bg-[#18181b] border border-[#27272a] rounded-2xl p-4 flex flex-col transition-all";
-                    cardEl.innerHTML = `
-                        <div class="flex justify-between items-start w-full">
-                            <div class="space-y-1 text-left">
-                                <div class="flex items-center space-x-2">
-                                    <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${markerColor}"></span>
-                                    <span class="text-xs font-bold text-white font-mono">${task.scooter_id}</span>
-                                </div>
-                                <p class="text-[11px] text-[#a1a1aa]">${task.location_type} (${task.region})</p>
+                const cardEl = document.createElement('div');
+                cardEl.className = "bg-[#18181b] border border-[#27272a] rounded-2xl p-4 flex flex-col transition-all";
+                cardEl.innerHTML = `
+                    <div class="flex justify-between items-start w-full">
+                        <div class="space-y-1 text-left">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${markerColor}"></span>
+                                <span class="text-xs font-bold text-white font-mono">${task.scooter_id}</span>
                             </div>
-                            <span class="text-[9px] px-2 py-0.5 rounded font-bold font-mono" style="background-color: ${markerColor}20; color: ${markerColor}">위험도 ${task.danger_score}점</span>
+                            <p class="text-[11px] text-[#a1a1aa]">${task.location_type} <span class="text-[10px] text-[#52525b]">(${task.region})</span></p>
                         </div>
-                        <div class="grid grid-cols-3 gap-2 mt-4 w-full">
-                            <a href="${kakaoNaviLink}" target="_blank" class="text-[10px] bg-[#27272a] text-[#f4f4f5] py-2 rounded-lg font-bold text-center flex items-center justify-center cursor-pointer transition-colors active:scale-95">길안내</a>
-                            <button onclick="executeDriverClear(${index}, ${task.danger_score})" class="text-[10px] col-span-2 bg-blue-600 text-white py-2 rounded-lg font-bold transition-colors cursor-pointer active:scale-95">수거 완료</button>
-                        </div>
-                    `;
-                    cardListContainer.appendChild(cardEl);
-                });
-            } catch (err) {
-                console.error("데이터 로드 에러:", err);
-            }
+                        <span class="text-[9px] px-2 py-0.5 rounded font-bold font-mono" style="background-color: ${markerColor}20; color: ${markerColor}">위험도 ${task.danger_score}점</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 mt-4 w-full">
+                        <button onclick="alert('길안내 시뮬레이션을 시작합니다. (지도 연동)')" class="text-[10px] bg-[#27272a] text-[#f4f4f5] py-2 rounded-lg font-bold text-center cursor-pointer active:scale-95">길안내</button>
+                        <button onclick="executeDriverClear(${realIndex})" class="text-[10px] col-span-2 bg-blue-600 text-white py-2 rounded-lg font-bold transition-colors cursor-pointer active:scale-95">수거완료</button>
+                    </div>
+                `;
+                cardListContainer.appendChild(cardEl);
+            });
         }
 
-        function executeDriverClear(idx, score) {
-            const rewardUnit = 3000 + (score * 500);
+        function executeDriverClear(targetIndex) {
+            let storedTasks = JSON.parse(localStorage.getItem("LOCAL_KICK_DB")) || [];
+            const rewardUnit = 3000 + (storedTasks[targetIndex].danger_score * 500);
+            
             driverPerformance.totalCleared += 1; 
             driverPerformance.totalMoney += rewardUnit;
-            alert("수거 실적이 정상 등록되었습니다.");
+            
+            alert(`[수거 완료]\n\n실적이 정상 승인되었습니다.\n+${rewardUnit.toLocaleString()}원 적립`);
+            
+            storedTasks.splice(targetIndex, 1); 
+            localStorage.setItem("LOCAL_KICK_DB", JSON.stringify(storedTasks));
             renderDriverCoreEngine();
         }
 
