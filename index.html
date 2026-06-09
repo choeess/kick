@@ -87,6 +87,33 @@
         </div>
     </div>
 
+    <div id="screenDriverLogin" class="w-full max-w-sm mx-auto flex-1 flex flex-col justify-between p-6 pt-16 pb-8 hidden">
+        <div class="space-y-2 text-left">
+            <h2 class="text-2xl font-bold tracking-tight text-white">수거기사 로그인</h2>
+            <p class="text-sm text-[#a1a1aa] font-medium leading-relaxed">소속 기프팅/수거 대행 회사를<br>선택하여 관제를 시작합니다.</p>
+        </div>
+
+        <div class="space-y-2.5 my-auto w-full">
+            <label class="text-[11px] font-semibold text-[#a1a1aa] block mb-1">소속 브랜드 선택</label>
+            <button onclick="loginAsCompany('지쿠(GCOO)')" class="w-full bg-[#18181b] border border-[#27272a] hover:border-green-500/50 rounded-xl p-4 text-left font-bold text-sm text-white flex justify-between items-center transition-all cursor-pointer">
+                <span>지쿠 (GCOO)</span> <span class="text-xs text-green-500 font-mono">Select ➔</span>
+            </button>
+            <button onclick="loginAsCompany('스윙(SWING)')" class="w-full bg-[#18181b] border border-[#27272a] hover:border-amber-500/50 rounded-xl p-4 text-left font-bold text-sm text-white flex justify-between items-center transition-all cursor-pointer">
+                <span>스윙 (SWING)</span> <span class="text-xs text-amber-500 font-mono">Select ➔</span>
+            </button>
+            <button onclick="loginAsCompany('빔(BEAM)')" class="w-full bg-[#18181b] border border-[#27272a] hover:border-purple-500/50 rounded-xl p-4 text-left font-bold text-sm text-white flex justify-between items-center transition-all cursor-pointer">
+                <span>빔 (BEAM)</span> <span class="text-xs text-purple-500 font-mono">Select ➔</span>
+            </button>
+            <button onclick="loginAsCompany('씽씽')" class="w-full bg-[#18181b] border border-[#27272a] hover:border-orange-500/50 rounded-xl p-4 text-left font-bold text-sm text-white flex justify-between items-center transition-all cursor-pointer">
+                <span>씽씽 (XING)</span> <span class="text-xs text-orange-500 font-mono">Select ➔</span>
+            </button>
+        </div>
+
+        <div class="pt-2">
+            <button onclick="showScreen('region')" class="text-xs text-[#a1a1aa] hover:text-white transition-colors cursor-pointer">➔ 이전으로</button>
+        </div>
+    </div>
+
     <div id="screenCitizen" class="w-full max-w-sm mx-auto h-screen flex flex-col hidden relative overflow-hidden bg-[#09090b]">
         <div class="bg-[#09090b]/90 border-b border-[#27272a] p-4 flex justify-between items-center flex-shrink-0 sticky top-0 z-40 backdrop-blur-md">
             <div>
@@ -106,7 +133,6 @@
             </div>
 
             <form class="space-y-5" onsubmit="event.preventDefault();">
-                
                 <div id="appQrContainer" class="block space-y-2">
                     <div id="appReaderMock" class="w-full aspect-video rounded-xl border border-[#27272a] bg-black flex flex-col items-center justify-center text-center p-4 text-xs text-[#a1a1aa] relative overflow-hidden">
                         <video id="liveCameraFeed" autoplay playsinline class="absolute inset-0 w-full h-full object-cover opacity-70"></video>
@@ -145,26 +171,23 @@
                 </div>
 
                 <div>
-    <label class="block text-[11px] font-semibold text-[#a1a1aa] mb-1.5">현장 사진</label>
-    
-    <input type="file" id="appImageInput" accept="image/*" onchange="onAppImageUpload(event)" class="hidden">
-    
-    <div class="grid grid-cols-2 gap-2">
-        <button type="button" onclick="document.getElementById('appImageInput').setAttribute('capture', 'environment'); document.getElementById('appImageInput').click();" class="flex flex-col items-center justify-center p-4 bg-[#18181b] border border-[#27272a] rounded-xl hover:border-blue-500/50 transition-all">
-            <span class="text-lg mb-1">📷</span>
-            <span class="text-[10px] font-bold text-white">카메라 촬영</span>
-        </button>
-        <button type="button" onclick="document.getElementById('appImageInput').removeAttribute('capture'); document.getElementById('appImageInput').click();" class="flex flex-col items-center justify-center p-4 bg-[#18181b] border border-[#27272a] rounded-xl hover:border-blue-500/50 transition-all">
-            <span class="text-lg mb-1">🖼️</span>
-            <span class="text-[10px] font-bold text-white">앨범에서 선택</span>
-        </button>
-    </div>
-
-    <div class="mt-3">
-        <img id="appImagePreview" class="hidden max-h-24 mx-auto rounded-lg border border-[#27272a]">
-        <div id="aiAnalysisPanel" class="p-3 bg-[#18181b] border border-[#27272a] rounded-xl font-mono text-[10px] text-blue-400 mt-2 hidden leading-relaxed"></div>
-    </div>
-</div>
+                    <label class="block text-[11px] font-semibold text-[#a1a1aa] mb-1.5">현장 사진</label>
+                    <input type="file" id="appImageInput" accept="image/*" onchange="onAppImageUpload(event)" class="hidden">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="document.getElementById('appImageInput').setAttribute('capture', 'environment'); document.getElementById('appImageInput').click();" class="flex flex-col items-center justify-center p-4 bg-[#18181b] border border-[#27272a] rounded-xl hover:border-blue-500/50 transition-all">
+                            <span class="text-lg mb-1">📷</span>
+                            <span class="text-[10px] font-bold text-white">카메라 촬영</span>
+                        </button>
+                        <button type="button" onclick="document.getElementById('appImageInput').removeAttribute('capture'); document.getElementById('appImageInput').click();" class="flex flex-col items-center justify-center p-4 bg-[#18181b] border border-[#27272a] rounded-xl hover:border-blue-500/50 transition-all">
+                            <span class="text-lg mb-1">🖼️</span>
+                            <span class="text-[10px] font-bold text-white">앨범에서 선택</span>
+                        </button>
+                    </div>
+                    <div class="mt-3">
+                        <img id="appImagePreview" class="hidden max-h-24 mx-auto rounded-lg border border-[#27272a]">
+                        <div id="aiAnalysisPanel" class="p-3 bg-[#18181b] border border-[#27272a] rounded-xl font-mono text-[10px] text-blue-400 mt-2 hidden leading-relaxed"></div>
+                    </div>
+                </div>
 
                 <button type="button" onclick="submitCitizenReport()" class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold text-sm cursor-pointer active:bg-blue-700 transition-all">신고 접수</button>
             </form>
@@ -194,9 +217,13 @@
         <div class="bg-[#09090b]/90 border-b border-[#27272a] p-4 flex justify-between items-center flex-shrink-0 z-30 backdrop-blur-md">
             <div>
                 <h2 id="driverHeaderTitle" class="text-sm font-bold text-white flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> 운행 지도</h2>
-                <p id="driverDisplayArea" class="text-[10px] text-[#a1a1aa] mt-0.5 ml-3.5"></p>
+                <div class="flex items-center gap-1.5 mt-0.5 ml-3.5">
+                    <span id="driverDisplayArea" class="text-[10px] text-[#a1a1aa]"></span>
+                    <span class="text-[9px] text-[#52525b]">|</span>
+                    <span id="driverCompanyBadge" class="text-[9px] text-blue-400 font-bold bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20"></span>
+                </div>
             </div>
-            <button onclick="showScreen('role')" class="text-[11px] text-[#a1a1aa] font-semibold cursor-pointer">종료</button>
+            <button onclick="logoutDriver()" class="text-[11px] text-[#a1a1aa] font-semibold cursor-pointer">종료</button>
         </div>
 
         <div class="flex-1 w-full relative min-h-0">
@@ -216,7 +243,10 @@
             <div id="driverSubPayout" class="absolute inset-0 bg-[#09090b] p-5 overflow-y-auto hidden z-10 space-y-4">
                 <div class="bg-[#18181b] border border-[#27272a] p-5 rounded-2xl flex items-center space-x-4">
                     <div class="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 flex items-center justify-center text-sm font-bold">DR</div>
-                    <div><h4 class="text-sm font-bold text-white">기사 프로필</h4><p class="text-[10px] text-[#a1a1aa] mt-0.5">인증 완료</p></div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white">기사 프로필</h4>
+                        <p id="driverProfileCompany" class="text-[10px] text-blue-400 mt-0.5 font-medium"></p>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-[#18181b] border border-[#27272a] p-5 rounded-2xl"><span class="text-[10px] font-medium text-[#a1a1aa] block mb-1">오늘 수거</span><span id="payoutCount" class="text-xl font-bold text-white font-mono">0건</span></div>
@@ -237,16 +267,21 @@
     </div>
 
     <script>
-        const appState = { userRole: null, detectedAddress: "단말기 주변 일대", lat: 37.0118, lng: 127.2321 };
+        // 전역 상태에 driverCompany(소속 회사) 상태 추가
+        const appState = { userRole: null, driverCompany: null, detectedAddress: "단말기 주변 일대", lat: 37.0118, lng: 127.2321 };
         let driverPerformance = { totalCleared: 0, totalMoney: 0 };
         let cameraStream = null;
 
         const APP_WEIGHTS = {"일반 보행로(인도)": 2, "점자블록 위": 5, "횡단보도": 5, "버스정류장 앞": 4, "소화전 앞": 4};
         const APP_BONUSES = {"해당 없음 (단순 주차)": 0, "통행을 완전히 막음 (길막)": 4, "상가/건물 출입구를 막음": 3, "차도나 자전거도로 침범": 2};
+        
+        // 브랜드 명칭 통일화 (기존 시드 데이터 보완)
         const DEFAULT_SEEDS = [
             {scooter_id: "GCOO-3091", brand: "지쿠(GCOO)", location_type: "점자블록 위", danger_score: 9, offsetX: -60, offsetY: -40, time: "오후 1:20"},
             {scooter_id: "SWING-8821", brand: "스윙(SWING)", location_type: "횡단보도", danger_score: 7, offsetX: 50, offsetY: -70, time: "오후 3:45"},
-            {scooter_id: "BEAM-0412", brand: "빔(BEAM)", location_type: "일반 보행로(인도)", danger_score: 2, offsetX: -40, offsetY: 60, time: "오후 4:10"}
+            {scooter_id: "BEAM-0412", brand: "빔(BEAM)", location_type: "일반 보행로(인도)", danger_score: 2, offsetX: -40, offsetY: 60, time: "오후 4:10"},
+            {scooter_id: "XING-9912", brand: "씽씽", location_type: "소화전 앞", danger_score: 8, offsetX: 70, offsetY: 40, time: "오후 5:02"},
+            {scooter_id: "GCOO-7741", brand: "지쿠(GCOO)", location_type: "버스정류장 앞", danger_score: 6, offsetX: 20, offsetY: 80, time: "오후 5:30"}
         ];
 
         async function startCamera() {
@@ -268,6 +303,7 @@
 
             document.getElementById('screenRole').className = "hidden";
             document.getElementById('screenRegion').className = "hidden";
+            document.getElementById('screenDriverLogin').className = "hidden"; // 추가된 스크린 바인딩 숨김
             document.getElementById('screenCitizen').className = "hidden";
             document.getElementById('screenDriver').className = "hidden";
 
@@ -276,6 +312,8 @@
             } else if (screenId === 'region') {
                 document.getElementById('screenRegion').className = "w-full max-w-sm mx-auto flex-1 flex flex-col justify-between p-6 pt-16 pb-8";
                 resetNextButton();
+            } else if (screenId === 'driverLogin') { // 기사 전용 로그인 스크린 표출
+                document.getElementById('screenDriverLogin').className = "w-full max-w-sm mx-auto flex-1 flex flex-col justify-between p-6 pt-16 pb-8";
             } else if (screenId === 'citizen') {
                 document.getElementById('screenCitizen').className = "w-full max-w-sm mx-auto h-screen flex flex-col relative overflow-hidden bg-[#09090b]";
                 document.getElementById('citizenDisplayArea').innerText = appState.detectedAddress.split(" (")[0];
@@ -283,6 +321,8 @@
             } else if (screenId === 'driver') {
                 document.getElementById('screenDriver').className = "w-full max-w-sm mx-auto h-screen flex flex-col overflow-hidden relative bg-[#09090b]";
                 document.getElementById('driverDisplayArea').innerText = appState.detectedAddress.split(" (")[0];
+                document.getElementById('driverCompanyBadge').innerText = appState.driverCompany;
+                document.getElementById('driverProfileCompany').innerText = `${appState.driverCompany} 소속`;
                 switchDriverSubTab('map'); 
             }
         }
@@ -317,7 +357,27 @@
 
         function onSearchInput() { if(!document.getElementById('addressSearchInput').value.trim()) resetNextButton(); }
         function resetNextButton() { document.getElementById('btnRegionNext').className = "w-full bg-[#18181b] border border-[#27272a] text-[#52525b] py-4 rounded-xl text-sm font-bold pointer-events-none text-center block transition-all"; }
-        function submitRegion() { showScreen(appState.userRole); }
+        
+        // 역할에 따라 목적지 분기 (시민은 바로 진입, 수거기사는 회사 로그인 페이지로 유도)
+        function submitRegion() { 
+            if (appState.userRole === 'driver') {
+                showScreen('driverLogin');
+            } else {
+                showScreen(appState.userRole); 
+            }
+        }
+
+        // [신규 추가] 회사 로그인 함수
+        function loginAsCompany(companyName) {
+            appState.driverCompany = companyName;
+            showScreen('driver');
+        }
+
+        // [신규 추가] 로그아웃 함수
+        function logoutDriver() {
+            appState.driverCompany = null;
+            showScreen('role');
+        }
 
         function switchAppMode(mode) {
             if (mode === 'qr') {
@@ -341,7 +401,6 @@
             reader.onload = function() {
                 document.getElementById('appImagePreview').src = reader.result;
                 document.getElementById('appImagePreview').classList.remove('hidden');
-                document.getElementById('appUploadPlaceholder').classList.add('hidden');
                 document.getElementById('aiAnalysisPanel').classList.remove('hidden');
                 document.getElementById('aiAnalysisPanel').innerHTML = "AI 스캔 중...";
                 setTimeout(() => { document.getElementById('aiAnalysisPanel').innerHTML = "식별 성공 (98.7% 일치)"; }, 800);
@@ -358,9 +417,9 @@
             const totalDangerScore = (APP_WEIGHTS[locationType] || 2) + (APP_BONUSES[obstructionType] || 0);
 
             let brand = "지쿠(GCOO)";
-            if (scooterId.includes("XING")) brand = "씽씽";
-            else if (scooterId.includes("BEAM")) brand = "빔(BEAM)";
-            else if (scooterId.includes("SWNG") || scooterId.includes("SWING")) brand = "스윙(SWING)";
+            if (scooterId.includes("XING") || scooterId.includes("씽씽")) brand = "씽씽";
+            else if (scooterId.includes("BEAM") || scooterId.includes("빔")) brand = "빔(BEAM)";
+            else if (scooterId.includes("SWNG") || scooterId.includes("SWING") || scooterId.includes("스윙")) brand = "스윙(SWING)";
 
             const timestamp = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
             const newTask = { scooter_id: scooterId, brand: brand, location_type: locationType, danger_score: totalDangerScore, time: timestamp, offsetX: Math.floor(Math.random() * 140) - 70, offsetY: Math.floor(Math.random() * 140) - 70 };
@@ -423,6 +482,7 @@
             renderDriverCoreEngine();
         }
 
+        // [주요 개조] 자사 브랜드 기기만 필터링하도록 렌더링 엔진 로직 수정
         function renderDriverCoreEngine() {
             const markersContainer = document.getElementById('mapMarkersContainer'); const cardListContainer = document.getElementById('driverCardListContainer');
             markersContainer.innerHTML = ''; cardListContainer.innerHTML = '';
@@ -430,10 +490,13 @@
             let storedTasks = JSON.parse(localStorage.getItem("KICK_TASKS")) || [];
             if (storedTasks.length === 0) { storedTasks = [...DEFAULT_SEEDS]; localStorage.setItem("KICK_TASKS", JSON.stringify(storedTasks)); }
 
-            storedTasks.sort((a,b) => b.danger_score - a.danger_score);
-            document.getElementById('listCountBadge').innerText = `${storedTasks.length}개 대기`;
+            // ★ 중요: 전체 데이터 중 수거 기사가 로그인한 브랜드(appState.driverCompany)와 일치하는 기기만 필터링합니다.
+            const companyTasks = storedTasks.filter(task => task.brand === appState.driverCompany);
 
-            storedTasks.forEach((task, index) => {
+            companyTasks.sort((a,b) => b.danger_score - a.danger_score);
+            document.getElementById('listCountBadge').innerText = `${companyTasks.length}개 대기`;
+
+            companyTasks.forEach((task, index) => {
                 let markerColor = "#ef4444"; if (task.danger_score < 4) markerColor = "#eab308"; else if (task.danger_score < 7) markerColor = "#f97316";
 
                 const markerEl = document.createElement('div');
@@ -443,6 +506,9 @@
 
                 const targetLat = (appState.lat + (task.offsetX * 0.0001)).toFixed(6); const targetLng = (appState.lng + (task.offsetY * 0.0001)).toFixed(6);
                 const kakaoNaviLink = `https://map.kakao.com/link/to/${task.scooter_id},${targetLat},${targetLng}`;
+
+                // 데이터 원본(storedTasks)에서의 실제 인덱스를 찾기 위해 고유 ID 조회
+                const realIndex = storedTasks.findIndex(t => t.scooter_id === task.scooter_id);
 
                 const cardEl = document.createElement('div');
                 cardEl.className = "bg-[#18181b] border border-[#27272a] rounded-2xl p-4 flex flex-col transition-all";
@@ -459,8 +525,8 @@
                     </div>
                     <div class="grid grid-cols-3 gap-2 mt-4 w-full">
                         <a href="${kakaoNaviLink}" target="_blank" class="text-[10px] bg-[#27272a] text-[#f4f4f5] py-2 rounded-lg font-bold text-center flex items-center justify-center cursor-pointer transition-colors active:scale-95">길안내</a>
-                        <button onclick="executeDriverMissing(${index})" class="text-[10px] bg-[#27272a] text-[#a1a1aa] py-2 rounded-lg font-bold transition-colors cursor-pointer active:scale-95">기기없음</button>
-                        <button onclick="executeDriverClear(${index})" class="text-[10px] bg-blue-600 text-white py-2 rounded-lg font-bold transition-colors cursor-pointer active:scale-95">수거완료</button>
+                        <button onclick="executeDriverMissing(${realIndex})" class="text-[10px] bg-[#27272a] text-[#a1a1aa] py-2 rounded-lg font-bold transition-colors cursor-pointer active:scale-95">기기없음</button>
+                        <button onclick="executeDriverClear(${realIndex})" class="text-[10px] bg-blue-600 text-white py-2 rounded-lg font-bold transition-colors cursor-pointer active:scale-95">수거완료</button>
                     </div>
                 `;
                 cardListContainer.appendChild(cardEl);
